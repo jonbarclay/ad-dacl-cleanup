@@ -1,0 +1,26 @@
+#### Remove ACL by index number
+
+
+$computerName = "dc01"
+$computer = Get-ADComputer -Identity $computerName
+$acl = Get-Acl -Path "AD:$($computer.DistinguishedName)"
+
+# Specify the index number from your query above
+$indexToRemove = 1  # Change this to the correct index number
+
+# Get the rule at that specific index
+$ruleToRemove = $acl.Access[$indexToRemove]
+
+# Display what you're about to remove
+Write-Host "About to remove this ACL entry:" -ForegroundColor Yellow
+$ruleToRemove | Format-List IdentityReference, ActiveDirectoryRights, AccessControlType, ObjectType
+
+# Confirm before removing
+$confirmation = Read-Host "Type 'YES' to confirm removal"
+if ($confirmation -eq 'YES') {
+    $acl.RemoveAccessRule($ruleToRemove) | Out-Null
+    Set-Acl -Path "AD:$($computer.DistinguishedName)" -AclObject $acl
+    Write-Host "ACL removed successfully!" -ForegroundColor Green
+} else {
+    Write-Host "Removal cancelled" -ForegroundColor Red
+}
