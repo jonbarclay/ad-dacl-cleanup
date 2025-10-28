@@ -1,0 +1,41 @@
+###Query for ACLs on computer, including index
+
+$computerName = "dc01"
+$computer = Get-ADComputer -Identity $computerName
+$acl = Get-Acl -Path "AD:$($computer.DistinguishedName)"
+
+# Display all ACEs with proper index numbers
+$index = 0
+$acl.Access | ForEach-Object {
+    [PSCustomObject]@{
+        Index = $index
+        IdentityReference = $_.IdentityReference
+        SID = $_.IdentityReference.Value
+        ActiveDirectoryRights = $_.ActiveDirectoryRights
+        AccessControlType = $_.AccessControlType
+        InheritanceType = $_.InheritanceType
+        ObjectType = $_.ObjectType
+    }
+    $index++
+} | Format-Table -AutoSize
+
+# Filter for Authenticated Users with proper index
+Write-Host "`n=== Authenticated Users ACL Details ===" -ForegroundColor Cyan
+$index = 0
+$acl.Access | ForEach-Object {
+    if ($_.IdentityReference -like "*Authenticated Users*") {
+        [PSCustomObject]@{
+            Index = $index
+            IdentityReference = $_.IdentityReference
+            SID = $_.IdentityReference.Value
+            ActiveDirectoryRights = $_.ActiveDirectoryRights
+            AccessControlType = $_.AccessControlType
+            InheritanceType = $_.InheritanceType
+            ObjectType = $_.ObjectType
+            InheritedObjectType = $_.InheritedObjectType
+            PropagationFlags = $_.PropagationFlags
+            InheritanceFlags = $_.InheritanceFlags
+        } | Format-List
+    }
+    $index++
+}
